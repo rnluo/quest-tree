@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  font-family: 'Inter', sans-serif;
+}
+
+@keyframes dash {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+
+.react-flow__pane {
+  cursor: default !important;
+}
+
+.react-flow__edge-path {
+  stroke: black;
+  stroke-width: 2;
+  cursor: pointer;
+}
+
+.edge-completed .react-flow__edge-path {
+  stroke-dasharray: none;
+  stroke: black;
+}
+
+.edge-history .react-flow__edge-path {
+  stroke: #9ca3af; /* gray-400 */
+  stroke-width: 2;
+  stroke-dasharray: 0;
+}
+
+.edge-in-progress .react-flow__edge-path {
+  stroke: black;
+  stroke-width: 2;
+  stroke-dasharray: 5;
+  animation: dash 1s linear infinite;
+}
+
+.edge-future .react-flow__edge-path {
+  stroke: #9ca3af; /* gray-400 */
+  stroke-width: 2;
+  stroke-dasharray: 5;
+}
