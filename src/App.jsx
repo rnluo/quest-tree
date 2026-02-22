@@ -139,6 +139,53 @@ function QuestFlow() {
       updateNodeData(nodeId, { quests: updatedQuests });
   }, [nodes, updateNodeData]);
 
+  const handleQuestCounterChange = useCallback((nodeId, questId, newCounter) => {
+      const node = nodes.find(n => n.id === nodeId);
+      if (!node) return;
+
+      const updatedQuests = node.data.quests.map((q) => {
+        if (q.id === questId) {
+          return { ...q, counter: newCounter };
+        }
+        return q;
+      });
+      updateNodeData(nodeId, { quests: updatedQuests });
+  }, [nodes, updateNodeData]);
+
+  const handleNodeCounterChange = useCallback((nodeId, newCounter) => {
+    updateNodeData(nodeId, { counter: newCounter });
+  }, [updateNodeData]);
+
+  const handleAddQuest = useCallback((nodeId) => {
+    const node = nodes.find(n => n.id === nodeId);
+    if (!node) return;
+    
+    const newQuest = {
+        id: `q-${Date.now()}`,
+        text: 'New Task',
+        completed: false
+    };
+    
+    const currentQuests = node.data.quests || [];
+    updateNodeData(nodeId, { quests: [...currentQuests, newQuest] });
+  }, [nodes, updateNodeData]);
+
+  const handleDeleteQuest = useCallback((nodeId, questId) => {
+    const node = nodes.find(n => n.id === nodeId);
+    if (!node) return;
+    
+    const currentQuests = node.data.quests || [];
+    const updatedQuests = currentQuests.filter(q => q.id !== questId);
+    updateNodeData(nodeId, { quests: updatedQuests });
+  }, [nodes, updateNodeData]);
+
+  const handleDeleteNode = useCallback((nodeId) => {
+    const newNodes = nodes.filter((n) => n.id !== nodeId);
+    const newEdges = edges.filter((e) => e.source !== nodeId && e.target !== nodeId);
+    setNodes(newNodes);
+    setEdges(newEdges);
+  }, [nodes, edges, setNodes, setEdges]);
+
   const nodesWithHandlers = useMemo(() => {
     return nodes.map((node) => ({
       ...node,
@@ -146,10 +193,16 @@ function QuestFlow() {
         ...node.data,
         onQuestToggle: handleQuestToggle,
         onTitleChange: handleTitleChange,
-        onQuestTextChange: handleQuestTextChange
+        onQuestTextChange: handleQuestTextChange,
+        onQuestCounterChange: handleQuestCounterChange,
+        onNodeCounterChange: handleNodeCounterChange,
+        onAddQuest: handleAddQuest,
+        onDeleteQuest: handleDeleteQuest,
+        onDeleteNode: handleDeleteNode,
+        isInteractive: isInteractive,
       },
     }));
-  }, [nodes, handleQuestToggle, handleTitleChange, handleQuestTextChange]);
+  }, [nodes, handleQuestToggle, handleTitleChange, handleQuestTextChange, handleQuestCounterChange, handleNodeCounterChange, handleAddQuest, handleDeleteQuest, handleDeleteNode, isInteractive]);
 
 
   const calculateGraphStyles = useCallback((currentNodes, currentEdges) => {
