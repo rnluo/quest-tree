@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, Plus, Trash2, Save } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { X, Plus, Trash2, Save, GripVertical } from 'lucide-react';
+import { motion, AnimatePresence, Reorder } from 'framer-motion';
 
 const Sidebar = ({ isOpen, onClose, selectedNode, onUpdateNode, onDeleteNode }) => {
   const [localTitle, setLocalTitle] = useState('');
@@ -106,9 +106,10 @@ const Sidebar = ({ isOpen, onClose, selectedNode, onUpdateNode, onDeleteNode }) 
                     </button>
                   </div>
                   
-                  <div className="space-y-2">
+                  <Reorder.Group axis="y" values={localQuests} onReorder={setLocalQuests} className="space-y-2">
                     {localQuests.map((quest) => (
-                      <div key={quest.id} className="flex items-center gap-2">
+                      <Reorder.Item key={quest.id} value={quest} className="flex items-center gap-2 bg-white relative">
+                        <GripVertical size={14} className="cursor-grab text-gray-400 shrink-0" />
                         <input
                           type="checkbox"
                           checked={quest.completed}
@@ -118,7 +119,7 @@ const Sidebar = ({ isOpen, onClose, selectedNode, onUpdateNode, onDeleteNode }) 
                             );
                             setLocalQuests(updated);
                           }}
-                          className="h-4 w-4 border-2 border-black rounded-none cursor-pointer"
+                          className="h-4 w-4 border-2 border-black rounded-none cursor-pointer shrink-0"
                         />
                         <input
                           type="text"
@@ -126,12 +127,12 @@ const Sidebar = ({ isOpen, onClose, selectedNode, onUpdateNode, onDeleteNode }) 
                           onChange={(e) => updateQuestText(quest.id, e.target.value)}
                           className={`flex-1 p-1 border-b border-gray-200 focus:border-black outline-none text-sm ${quest.completed ? 'line-through text-gray-400' : ''}`}
                         />
-                        <button onClick={() => removeQuest(quest.id)} className="text-gray-400 hover:text-red-500">
+                        <button onClick={() => removeQuest(quest.id)} className="text-gray-400 hover:text-red-500 shrink-0">
                           <Trash2 size={14} />
                         </button>
-                      </div>
+                      </Reorder.Item>
                     ))}
-                  </div>
+                  </Reorder.Group>
                 </div>
 
                 <div className="pt-6 border-t border-gray-200">

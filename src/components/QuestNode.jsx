@@ -60,12 +60,12 @@ const QuestNode = ({ id, data, isConnectable }) => {
 
   // Calculate counter groups
   const rows = [
-    { 
+    ...(title ? [{ 
         id: 'title', 
         counter, 
-        isCompleted: isDimmed, // Title row uses isDimmed 
+        isCompleted: isDimmed, 
         onUpdate: (c) => onNodeCounterChange && onNodeCounterChange(id, c) 
-    },
+    }] : []),
     ...(quests || []).map(q => ({
         id: q.id,
         counter: q.counter,

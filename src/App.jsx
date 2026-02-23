@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import ReactFlow, {
   ReactFlowProvider,
   addEdge,
@@ -13,10 +13,11 @@ import ReactFlow, {
   getOutgoers,
   MarkerType,
   ControlButton,
-  useReactFlow
+  useReactFlow,
+  Panel
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { Plus } from 'lucide-react';
+import { Plus, Download, Upload } from 'lucide-react';
 import Eye from './icons/Eye';
 import EyeOff from './icons/EyeOff';
 import Fit from './icons/Fit';
@@ -407,9 +408,81 @@ function QuestFlow() {
       setSelectedNodeId(null);
   }, []);
 
+  const fileInputRef = useRef(null);
+
+  const handleExport = useCallback(() => {
+    const flowData = {
+      nodes,
+      edges,
+      version: '1.0.0', // Basic versioning for future compatibility
+    };
+    
+    // Create a download link for the JSON file
+    const jsonString = JSON.stringify(flowData, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `quest-flow-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(link);
+    link.click();
+    
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }, [nodes, edges]);
+
+  const handleImportClick = useCallback(() => {
+    if (fileInputRef.current) {
+        fileInputRef.current.click();
+    }
+  }, []);
+
+  const handleFileChange = useCallback((event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const flowData = JSON.parse(e.target.result);
+        
+        // Basic validation check
+        if (!Array.isArray(flowData?.nodes) || !Array.isArray(flowData?.edges)) {
+            console.error('Invalid file format: nodes or edges are missing');
+            alert('Invalid file format. Please upload a valid JSON file exported from this app.');
+            return;
+        }
+
+        setState({
+          nodes: flowData.nodes,
+          edges: flowData.edges
+        });
+        
+        // Optionally clear history or fit view after import
+        setTimeout(() => fitView({ duration: 800, padding: 0.2 }), 100);
+        
+      } catch (error) {
+        console.error('Error parsing JSON:', error);
+        alert('Error parsing the file.');
+      }
+    };
+    reader.readAsText(file);
+    
+    // Reset inputs value to allow same file selection again
+    event.target.value = '';
+  }, [setState, fitView]);
 
   return ( // main container
     <div className="w-full h-screen bg-white">
+      {/* Hidden File Input */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        style={{ display: 'none' }}
+        accept=".json"
+      />
       <ReactFlow
         nodes={renderNodes}
         nodesDraggable={isInteractive}
@@ -438,6 +511,12 @@ function QuestFlow() {
             showFitView={false}
             showInteractive={false}
         >
+            <ControlButton onClick={handleImportClick} title="Import JSON">
+                <Upload strokeWidth={3} size="24px" className="!fill-transparent" />
+            </ControlButton>
+            <ControlButton onClick={handleExport} title="Export JSON">
+                <Download strokeWidth={3} size="24px" className="!fill-transparent" />
+            </ControlButton>
             <ControlButton onClick={() => setFocusMode(!focusMode)} title="Toggle Focus Mode">
               {focusMode ? <Eye strokeWidth={3} size="24px" className="!fill-transparent" /> : <EyeOff strokeWidth={3} size="24px" className="!fill-transparent" />}
             </ControlButton>
