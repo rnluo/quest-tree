@@ -17,12 +17,15 @@ const QuestNode = ({ id, data, isConnectable }) => {
       onDeleteNode,
       isDimmed, 
       counter,
-      isInteractive 
+      isInteractive,
+      isPrivacyMode 
   } = data;
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editingTitle, setEditingTitle] = useState(title);
   const [isTitleHovered, setIsTitleHovered] = useState(false);
   const nodeRef = useRef(null);
+  
+  const displayTitle = isPrivacyMode && title ? title.replace(/[^ ]/g, '*') : title;
   
   const borderColor = isDimmed ? 'border-gray-400' : 'border-black';
   const textColor = isDimmed ? 'text-gray-500' : 'text-black';
@@ -39,7 +42,7 @@ const QuestNode = ({ id, data, isConnectable }) => {
         if (targetWidth < minWidth) targetWidth = minWidth;
         nodeRef.current.style.width = `${targetWidth}px`;
     }
-  }, [title, quests, isEditingTitle, editingTitle]);
+  }, [title, quests, isEditingTitle, editingTitle, isPrivacyMode]);
 
   // Focus input when editing starts
   const titleInputRef = useRef(null);
@@ -185,6 +188,7 @@ const QuestNode = ({ id, data, isConnectable }) => {
                 {isEditingTitle ? (
                     <input
                         ref={titleInputRef}
+                        type={isPrivacyMode ? "password" : "text"}
                         className="w-full text-center outline-none bg-transparent nodrag"
                         value={editingTitle}
                         onChange={(e) => setEditingTitle(e.target.value)}
@@ -198,7 +202,7 @@ const QuestNode = ({ id, data, isConnectable }) => {
                         }}
                     />
                 ) : (
-                    title
+                    displayTitle
                 )}
             </div>
         ) : null}
@@ -215,6 +219,7 @@ const QuestNode = ({ id, data, isConnectable }) => {
                         nodeId={id}
                         isNodeDimmed={isDimmed}
                         isInteractive={isInteractive}
+                        isPrivacyMode={isPrivacyMode}
                         isLast={isLast}
                         onToggle={onQuestToggle}
                         onTextChange={onQuestTextChange}
@@ -311,7 +316,7 @@ const CounterGroup = ({ group, isDimmed, isInteractive }) => {
 
             {/* The Main Merged Box */}
             <div 
-                className={`flex flex-col bg-white border-2 shadow-sm rounded-sm box-border w-[82px]
+                className={`flex flex-col bg-white border-2 shadow-lg rounded-sm box-border w-[82px]
                     ${isDimmed ? 'border-gray-400' : 'border-black'}
                 `}
                 style={{ height: '100%' }}
@@ -574,11 +579,13 @@ const AddCounterButton = ({ isParentHovered, onAdd, isNodeDimmed }) => {
     );
 }
 
-const QuestItem = ({ quest, nodeId, onToggle, onTextChange, onCounterChange, isNodeDimmed, isInteractive, isLast, onDeleteQuest, onAddQuest }) => {
+const QuestItem = ({ quest, nodeId, onToggle, onTextChange, onCounterChange, isNodeDimmed, isInteractive, isPrivacyMode, isLast, onDeleteQuest, onAddQuest }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [text, setText] = useState(quest.text);
     const [isHovered, setIsHovered] = useState(false);
     const inputRef = useRef(null);
+    
+    const displayText = isPrivacyMode ? quest.text.replace(/[^ ]/g, '*') : quest.text;
 
     useEffect(() => {
         if (isEditing && inputRef.current) {
@@ -670,6 +677,7 @@ const QuestItem = ({ quest, nodeId, onToggle, onTextChange, onCounterChange, isN
                  {isEditing ? (
                     <input 
                         ref={inputRef}
+                        type={isPrivacyMode ? "password" : "text"}
                         className="w-full outline-none bg-transparent nodrag"
                         value={text}
                         onChange={(e) => setText(e.target.value)}
@@ -684,7 +692,7 @@ const QuestItem = ({ quest, nodeId, onToggle, onTextChange, onCounterChange, isN
                     />
                  ) : (
                     <span className={`${quest.completed ? 'line-through text-gray-500' : ''} w-full block`}>
-                        {quest.text}
+                        {displayText}
                     </span>
                  )}
             </div>

@@ -63,6 +63,7 @@ function QuestFlow() {
   const [selectedNodeId, setSelectedNodeId] = useState(null);
   const [focusMode, setFocusMode] = useState(true);
   const [isInteractive, setIsInteractive] = useState(true);
+  const [isPrivacyMode, setIsPrivacyMode] = useState(false); // New state for privacy mode
 
   // Derive selected node from source of truth
   const selectedNode = useMemo(() => 
@@ -92,7 +93,7 @@ function QuestFlow() {
     }
   }, [nodes, edges]);
 
-  // Keyboard Shortcuts for Undo/Redo
+  // Keyboard Shortcuts for Undo/Redo & Privacy Mode
   useEffect(() => {
       const handleKeyDown = (e) => {
           if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
@@ -100,6 +101,12 @@ function QuestFlow() {
                   redo();
               } else {
                   undo();
+              }
+          }
+          
+          if (e.ctrlKey && e.altKey && !e.repeat) {
+              if (e.key === 'Control' || e.key === 'Alt' || e.key === 'AltGraph') {
+                   setIsPrivacyMode(prev => !prev);
               }
           }
       };
@@ -146,6 +153,10 @@ function QuestFlow() {
 
       const updatedQuests = node.data.quests.map((q) => {
         if (q.id === questId) {
+          if (newCounter) {
+             const isCompleted = newCounter.current >= newCounter.max;
+             return { ...q, counter: newCounter, completed: isCompleted };
+          }
           return { ...q, counter: newCounter };
         }
         return q;
@@ -201,9 +212,10 @@ function QuestFlow() {
         onDeleteQuest: handleDeleteQuest,
         onDeleteNode: handleDeleteNode,
         isInteractive: isInteractive,
+        isPrivacyMode: isPrivacyMode,
       },
     }));
-  }, [nodes, handleQuestToggle, handleTitleChange, handleQuestTextChange, handleQuestCounterChange, handleNodeCounterChange, handleAddQuest, handleDeleteQuest, handleDeleteNode, isInteractive]);
+  }, [nodes, handleQuestToggle, handleTitleChange, handleQuestTextChange, handleQuestCounterChange, handleNodeCounterChange, handleAddQuest, handleDeleteQuest, handleDeleteNode, isInteractive, isPrivacyMode]);
 
 
   const calculateGraphStyles = useCallback((currentNodes, currentEdges) => {
@@ -211,7 +223,18 @@ function QuestFlow() {
     const locallyCompleteIds = new Set();
     currentNodes.forEach(node => {
       const quests = node.data.quests || [];
-      const isComplete = quests.length === 0 || quests.every(q => q.completed);
+      const counter = node.data.counter;
+
+      let isComplete = true;
+      if (quests.length > 0) {
+          isComplete = quests.every(q => q.completed);
+      }
+      
+      if (counter) {
+          const counterComplete = counter.current >= counter.max;
+          if (!counterComplete) isComplete = false;
+      }
+
       if (isComplete) {
         locallyCompleteIds.add(node.id);
       }
