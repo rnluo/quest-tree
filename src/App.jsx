@@ -577,6 +577,7 @@ function QuestFlow() {
         selectedNode={selectedNode}
         onUpdateNode={onSidebarUpdateNode}
         onDeleteNode={deleteNode}
+        isPrivacyMode={isPrivacyMode}
       />
     </div>
   );
