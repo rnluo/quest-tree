@@ -2,6 +2,83 @@ import React, { useState, useEffect } from 'react';
 import { X, Plus, Trash2, Save, GripVertical } from 'lucide-react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 
+const getMaskedValue = (val) => val.replace(/[^ ]/g, '*');
+
+const MaskedInput = ({ value, onChange, className, type = "text", placeholder, wrapperClassName = "w-full", isPrivacyMode, ...props }) => {
+  if (!isPrivacyMode) {
+    return (
+      <input
+        type={type}
+        value={value}
+        onChange={onChange}
+        className={`${className} ${wrapperClassName === 'flex-1' ? 'flex-1' : ''}`}
+        placeholder={placeholder}
+        {...props}
+      />
+    );
+  }
+
+  const maskedValue = getMaskedValue(value);
+
+  return (
+    <div className={`relative ${wrapperClassName}`}>
+      <input
+        type="text"
+        value={maskedValue}
+        readOnly
+        className={`${className} absolute inset-0 z-0 text-black bg-white select-none pointer-events-none`}
+        style={{ borderColor: 'transparent' }}
+        tabIndex={-1}
+      />
+      <input
+        type={type}
+        value={value}
+        onChange={onChange}
+        className={`${className} relative z-10 bg-transparent focus:bg-transparent`}
+        style={{ color: 'transparent', caretColor: 'black', backgroundColor: 'transparent' }}
+        placeholder={placeholder}
+        {...props}
+      />
+    </div>
+  );
+};
+
+const MaskedTextarea = ({ value, onChange, className, placeholder, isPrivacyMode, ...props }) => {
+  if (!isPrivacyMode) {
+    return (
+      <textarea
+        value={value}
+        onChange={onChange}
+        className={className}
+        placeholder={placeholder}
+        {...props}
+      />
+    );
+  }
+
+  const maskedValue = getMaskedValue(value);
+
+  return (
+    <div className="relative w-full h-24">
+      <textarea
+        value={maskedValue}
+        readOnly
+        className={`${className} absolute inset-0 z-0 text-black bg-white select-none pointer-events-none`}
+        style={{ borderColor: 'transparent' }}
+        tabIndex={-1}
+      />
+      <textarea
+        value={value}
+        onChange={onChange}
+        className={`${className} relative z-10 bg-transparent focus:bg-transparent`}
+        style={{ color: 'transparent', caretColor: 'black', backgroundColor: 'transparent' }}
+        placeholder={placeholder}
+        {...props}
+      />
+    </div>
+  );
+};
+
 const Sidebar = ({ isOpen, onClose, selectedNode, onUpdateNode, onDeleteNode, isPrivacyMode }) => {
   const [localTitle, setLocalTitle] = useState('');
   const [localDescription, setLocalDescription] = useState('');
@@ -10,105 +87,15 @@ const Sidebar = ({ isOpen, onClose, selectedNode, onUpdateNode, onDeleteNode, is
   // Sync local state when selectedNode changes
   useEffect(() => {
     if (selectedNode) {
-      setLocalTitle(selectedNode.data.title || '');
-      setLocalDescription(selectedNode.data.description || '');
-      setLocalQuests(selectedNode.data.quests || []);
+      setLocalTitle((prev) => (prev === selectedNode.data.title ? prev : (selectedNode.data.title || '')));
+      setLocalDescription((prev) => (prev === selectedNode.data.description ? prev : (selectedNode.data.description || '')));
+      setLocalQuests((prev) => {
+        const isSame = JSON.stringify(prev) === JSON.stringify(selectedNode.data.quests);
+        return isSame ? prev : (selectedNode.data.quests || []);
+      });
     }
-  }, [selectedNode]);
+  }, [selectedNode?.id]); // Only trigger on node change, not data change
 
-  // Helper functions for masking
-  const getMaskedValue = (val) => val.replace(/[^ ]/g, '*');
-
-  const MaskedInput = ({ value, onChange, className, type = "text", placeholder, wrapperClassName = "w-full", ...props }) => {
-    if (!isPrivacyMode) {
-      return (
-        <input
-          type={type}
-          value={value}
-          onChange={onChange}
-          className={`${className} ${wrapperClassName === 'flex-1' ? 'flex-1' : ''}`} 
-          // If wrapperClassName was meant for flex, pass it here too if not used in wrapper? 
-          // Actually, if !isPrivacyMode, we return input directly. The calling code expects 'className' to handle layout.
-          // IF the calling code relies on 'className' for layout (like flex-1), it works here.
-          // BUT if we use MaskedInput, we might need to separate layout styles from visual styles.
-          placeholder={placeholder}
-          {...props}
-        />
-      );
-    }
-
-    const maskedValue = getMaskedValue(value);
-
-    return (
-      <div className={`relative ${wrapperClassName}`}>
-        {/* Underlay (Text) */}
-        <input
-           type="text"
-           value={maskedValue}
-           readOnly
-           className={`${className} absolute inset-0 z-0 text-black bg-white select-none pointer-events-none border-transparent`}
-           style={{ borderColor: 'transparent' }} 
-        />
-        
-        {/* Overlay (Interaction) */}
-        <input 
-            type={type}
-            value={value}
-            onChange={onChange}
-            className={`${className} relative z-10 text-transparent caret-black bg-transparent focus:bg-transparent`}
-            style={{ 
-                color: 'transparent', 
-                caretColor: 'black', 
-                backgroundColor: 'transparent'
-            }}
-            placeholder={placeholder}
-            {...props}
-        />
-      </div>
-    );
-  };
-
-  const MaskedTextarea = ({ value, onChange, className, placeholder, ...props }) => {
-    if (!isPrivacyMode) {
-        return (
-            <textarea
-                value={value}
-                onChange={onChange}
-                className={className}
-                placeholder={placeholder}
-                {...props}
-            />
-        );
-    }
-
-    const maskedValue = getMaskedValue(value);
-
-    return (
-        <div className="relative w-full h-24">
-             {/* Underlay */}
-            <textarea
-                value={maskedValue}
-                readOnly
-                className={`${className} absolute inset-0 z-0 text-black bg-white select-none pointer-events-none border-transparent`}
-                 style={{ borderColor: 'transparent' }}
-            />
-             {/* Overlay */}
-            <textarea
-                value={value}
-                onChange={onChange}
-                className={`${className} relative z-10 text-transparent caret-black bg-transparent focus:bg-transparent`}
-                style={{ 
-                    color: 'transparent', 
-                    caretColor: 'black',
-                    backgroundColor: 'transparent' 
-                }}
-                placeholder={placeholder}
-                {...props}
-            />
-        </div>
-    );
-  };
-  
   const handleSave = () => {
     if (selectedNode) {
       onUpdateNode(selectedNode.id, {
@@ -171,6 +158,7 @@ const Sidebar = ({ isOpen, onClose, selectedNode, onUpdateNode, onDeleteNode, is
                 <div>
                   <label className="block text-xs font-bold uppercase mb-2 text-gray-500">Title</label>
                   <MaskedInput
+                    isPrivacyMode={isPrivacyMode}
                     value={localTitle}
                     onChange={(e) => setLocalTitle(e.target.value)}
                     className="w-full p-2 border-2 border-gray-300 focus:border-black outline-none font-bold"
@@ -180,6 +168,7 @@ const Sidebar = ({ isOpen, onClose, selectedNode, onUpdateNode, onDeleteNode, is
                 <div>
                   <label className="block text-xs font-bold uppercase mb-2 text-gray-500">Description</label>
                   <MaskedTextarea
+                    isPrivacyMode={isPrivacyMode}
                     value={localDescription}
                     onChange={(e) => setLocalDescription(e.target.value)}
                     className="w-full p-2 border-2 border-gray-300 focus:border-black outline-none font-sans text-sm h-24 resize-none"
@@ -214,6 +203,7 @@ const Sidebar = ({ isOpen, onClose, selectedNode, onUpdateNode, onDeleteNode, is
                           className="h-4 w-4 border-2 border-black rounded-none cursor-pointer shrink-0"
                         />
                         <MaskedInput
+                          isPrivacyMode={isPrivacyMode}
                           value={quest.text}
                           onChange={(e) => updateQuestText(quest.id, e.target.value)}
                           wrapperClassName="flex-1"
