@@ -17,7 +17,7 @@ import ReactFlow, {
   Panel
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { Plus, Download, Upload } from 'lucide-react';
+import { Plus, Download, Upload, Zap } from 'lucide-react';
 import Eye from './icons/Eye';
 import EyeOff from './icons/EyeOff';
 import Fit from './icons/Fit';
@@ -64,6 +64,7 @@ function QuestFlow() {
   const [focusMode, setFocusMode] = useState(true);
   const [isInteractive, setIsInteractive] = useState(true);
   const [isPrivacyMode, setIsPrivacyMode] = useState(false); // New state for privacy mode
+  const [showEnergyColumn, setShowEnergyColumn] = useState(false);
 
   // Derive selected node from source of truth
   const selectedNode = useMemo(() => 
@@ -168,6 +169,19 @@ function QuestFlow() {
     updateNodeData(nodeId, { counter: newCounter });
   }, [updateNodeData]);
 
+  const handleQuestEnergyChange = useCallback((nodeId, questId, newValue) => {
+    const node = nodes.find(n => n.id === nodeId);
+    if (!node) return;
+    const updatedQuests = node.data.quests.map(q =>
+      q.id === questId ? { ...q, energy: newValue } : q
+    );
+    updateNodeData(nodeId, { quests: updatedQuests });
+  }, [nodes, updateNodeData]);
+
+  const handleNodeEnergyChange = useCallback((nodeId, newValue) => {
+    updateNodeData(nodeId, { energy: newValue });
+  }, [updateNodeData]);
+
   const handleAddQuest = useCallback((nodeId) => {
     const node = nodes.find(n => n.id === nodeId);
     if (!node) return;
@@ -213,9 +227,12 @@ function QuestFlow() {
         onDeleteNode: handleDeleteNode,
         isInteractive: isInteractive,
         isPrivacyMode: isPrivacyMode,
+        showEnergyColumn: showEnergyColumn,
+        onQuestEnergyChange: handleQuestEnergyChange,
+        onNodeEnergyChange: handleNodeEnergyChange,
       },
     }));
-  }, [nodes, handleQuestToggle, handleTitleChange, handleQuestTextChange, handleQuestCounterChange, handleNodeCounterChange, handleAddQuest, handleDeleteQuest, handleDeleteNode, isInteractive, isPrivacyMode]);
+  }, [nodes, handleQuestToggle, handleTitleChange, handleQuestTextChange, handleQuestCounterChange, handleNodeCounterChange, handleAddQuest, handleDeleteQuest, handleDeleteNode, isInteractive, isPrivacyMode, showEnergyColumn, handleQuestEnergyChange, handleNodeEnergyChange]);
 
 
   const calculateGraphStyles = useCallback((currentNodes, currentEdges) => {
@@ -540,11 +557,14 @@ function QuestFlow() {
             <ControlButton onClick={handleExport} title="Export JSON">
                 <Download strokeWidth={3} size="24px" className="!fill-transparent" />
             </ControlButton>
+            <ControlButton onClick={() => setIsInteractive(!isInteractive)} title="Toggle Interactivity">
+                {isInteractive ? <LockOpen strokeWidth={3} size="24px" className="!fill-transparent" /> : <Lock strokeWidth={3} size="24px" className="!fill-transparent" />}
+            </ControlButton>
             <ControlButton onClick={() => setFocusMode(!focusMode)} title="Toggle Focus Mode">
               {focusMode ? <Eye strokeWidth={3} size="24px" className="!fill-transparent" /> : <EyeOff strokeWidth={3} size="24px" className="!fill-transparent" />}
             </ControlButton>
-            <ControlButton onClick={() => setIsInteractive(!isInteractive)} title="Toggle Interactivity">
-                {isInteractive ? <LockOpen strokeWidth={3} size="24px" className="!fill-transparent" /> : <Lock strokeWidth={3} size="24px" className="!fill-transparent" />}
+            <ControlButton onClick={() => setShowEnergyColumn(prev => !prev)} title="Toggle Energy Column">
+                <Zap strokeWidth={3} size="24px" className={showEnergyColumn ? '' : '!fill-transparent'} />
             </ControlButton>
             <ControlButton onClick={() => fitView({ duration: 800, padding: 0.2 })} title="Fit View">
                 <Fit strokeWidth={3} size="24px" className="!fill-transparent" />

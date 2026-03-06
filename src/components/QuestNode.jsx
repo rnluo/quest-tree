@@ -18,7 +18,10 @@ const QuestNode = ({ id, data, isConnectable }) => {
       isDimmed, 
       counter,
       isInteractive,
-      isPrivacyMode 
+      isPrivacyMode,
+      showEnergyColumn,
+      onQuestEnergyChange,
+      onNodeEnergyChange
   } = data;
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editingTitle, setEditingTitle] = useState(title);
@@ -97,19 +100,41 @@ const QuestNode = ({ id, data, isConnectable }) => {
       counterGroups.push(currentGroup);
   }
 
+  const hasAnyCounter = rows.some(r => r.counter);
+
+  const energyTopOffset = title ? 40 : 0;
+  const energyRows = showEnergyColumn && quests && quests.length > 0
+    ? quests.map((q) => ({
+        id: q.id + '-e',
+        energy: q.energy ?? 0,
+        onUpdate: (val) => onQuestEnergyChange && onQuestEnergyChange(id, q.id, val)
+      }))
+    : [];
+
   return (
     <div 
         ref={nodeRef}
         className={`relative bg-transparent group font-mono ${textColor} box-border`}
         style={{ transform: 'translate(-1px, -1px)' }}
     >
+      {/* Energy Column Overlay — rendered first (behind everything) */}
+      {showEnergyColumn && energyRows.length > 0 && (
+          <EnergyGroup
+            rows={energyRows}
+            topOffset={energyTopOffset}
+            hasAnyCounter={hasAnyCounter}
+            isDimmed={isDimmed}
+            isInteractive={isInteractive}
+          />
+      )}
+
       {/* Counter Groups Overlay */}
       {counterGroups.map((group, i) => (
           <CounterGroup 
             key={i} 
             group={group} 
             isDimmed={isDimmed}
-            isInteractive={isInteractive} // Pass it here
+            isInteractive={isInteractive}
           />
       ))}
 
@@ -268,6 +293,110 @@ const QuestNode = ({ id, data, isConnectable }) => {
   );
 };
 
+const EnergyGroup = ({ rows, topOffset = 0, hasAnyCounter, isDimmed, isInteractive }) => {
+    const numRows = rows.length;
+    const height = numRows * 40 + 2;
+    const rightEdge = hasAnyCounter ? 120 : 20;
+    const boxLeft = -(rightEdge + 40);
+    const connectorWidth = hasAnyCounter ? 120 : 20;
+
+    return (
+        <div
+            className="absolute box-border z-[1] pointer-events-none"
+            style={{
+                left: `${boxLeft}px`,
+                top: `${topOffset}px`,
+                width: `${40 + connectorWidth}px`,
+                height: `${height}px`,
+            }}
+        >
+            {/* Connector lines */}
+            <div className="absolute right-0 top-0 bottom-0 pointer-events-none" style={{ width: `${connectorWidth}px` }}>
+                {rows.map((row, i) => (
+                    <div
+                        key={i}
+                        className={`absolute h-[2px] w-full ${isDimmed ? 'bg-gray-400' : 'bg-black'}`}
+                        style={{ top: `${i * 40 + 20}px`, transform: 'translateY(-50%)' }}
+                    />
+                ))}
+            </div>
+            {/* Main box */}
+            <div
+                className={`flex flex-col bg-white border-2 shadow-lg rounded-sm box-border pointer-events-auto
+                    ${isDimmed ? 'border-gray-400' : 'border-black'}
+                `}
+                style={{ width: '42px', height: '100%', position: 'relative' }}
+            >
+                {rows.map((row, i) => (
+                    <div
+                        key={i}
+                        className={`absolute w-full box-border${i < rows.length - 1 ? ' border-b border-gray-200' : ''}`}
+                        style={{ top: `${i * 40}px`, height: '40px' }}
+                    >
+                        <EnergyCell
+                            value={row.energy}
+                            onUpdate={row.onUpdate}
+                            isDimmed={isDimmed}
+                            isInteractive={isInteractive}
+                        />
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+
+const ENERGY_COLORS = [
+    null,                       // 0 — white (default bg)
+    'rgba(0,153,255,0.15)',     // 1
+    'rgba(0,153,255,0.32)',     // 2
+    'rgba(0,153,255,0.50)',     // 3
+    'rgba(0,153,255,0.72)',     // 4
+    '#0099ff',                  // 5
+];
+
+const EnergyCell = ({ value, onUpdate, isDimmed, isInteractive }) => {
+    const [isHovered, setIsHovered] = useState(false);
+    const bgColor = !isDimmed && value > 0 ? ENERGY_COLORS[value] : undefined;
+    const textColor = isDimmed ? 'text-gray-400' : value === 0 ? 'text-gray-300' : value >= 4 ? 'text-white' : 'text-black';
+
+    return (
+        <div
+            className="w-full h-full flex flex-col items-center outline-none"
+            style={{ backgroundColor: bgColor }}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+            onClick={(e) => e.stopPropagation()}
+        >
+            <button
+                className={`w-full flex justify-center flex-1 items-center
+                    ${isInteractive ? 'hover:bg-black/10 active:bg-black/20 cursor-pointer' : 'cursor-default'}`}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    if (isInteractive) onUpdate((value + 1) % 6);
+                }}
+                disabled={!isInteractive}
+            >
+                {isHovered && isInteractive && <ChevronUp size={10} className={textColor} />}
+            </button>
+            <div className={`absolute inset-0 flex items-center justify-center font-bold text-sm leading-none pointer-events-none ${textColor}`}>
+                {value}
+            </div>
+            <button
+                className={`w-full flex justify-center flex-1 items-center
+                    ${isInteractive ? 'hover:bg-black/10 active:bg-black/20 cursor-pointer' : 'cursor-default'}`}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    if (isInteractive) onUpdate((value + 5) % 6);
+                }}
+                disabled={!isInteractive}
+            >
+                {isHovered && isInteractive && <ChevronDown size={10} className={textColor} />}
+            </button>
+        </div>
+    );
+};
+
 const CounterGroup = ({ group, isDimmed, isInteractive }) => {
     const { startIndex, items } = group;
     // Calculate position
@@ -422,12 +551,7 @@ const CounterRow = ({ counter, onUpdate, isRowCompleted, isNodeDimmed, isInterac
                         <X size={14} strokeWidth={3} />
                     </button>
                     
-                     {/* Connector line for remove button */}
-                     <div 
-                        className={`absolute right-0 top-1/2 w-[11px] h-[2px] -translate-y-1/2 pointer-events-none
-                             ${isNodeDimmed ? 'bg-gray-400' : 'bg-black'}
-                        `} 
-                    />
+
                 </div>
              )}
 
@@ -530,11 +654,6 @@ const RemoveNodeButton = ({ isParentHovered, onRemove, isNodeDimmed }) => {
             >
                 <X size={14} strokeWidth={3} />
             </button>
-             <div 
-                className={`absolute left-0 top-1/2 w-[11px] h-[2px] -translate-y-1/2 pointer-events-none
-                    ${isNodeDimmed ? 'bg-gray-400' : 'bg-black'}
-                `} 
-            />
         </div>
     );
 };
@@ -570,11 +689,6 @@ const AddCounterButton = ({ isParentHovered, onAdd, isNodeDimmed }) => {
             >
                 <Plus size={14} strokeWidth={3} />
             </button>
-             <div 
-                className={`absolute right-0 top-1/2 w-[11px] h-[2px] -translate-y-1/2 pointer-events-none
-                    ${isNodeDimmed ? 'bg-gray-400' : 'bg-black'}
-                `} 
-            />
         </div>
     );
 }
