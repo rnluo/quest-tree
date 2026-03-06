@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Plus, Trash2, GripVertical, ChevronDown, ChevronUp, ChevronsDown, ChevronsUp } from 'lucide-react';
+import { X, Plus, Trash2, GripVertical, ChevronDown, ChevronUp, ChevronsDown, ChevronsUp, CheckSquare, Square } from 'lucide-react';
 import { Reorder } from 'framer-motion';
 
 const getMaskedValue = (val) => val.replace(/[^ ]/g, '*');
@@ -43,7 +43,7 @@ const MaskedInput = ({ value, onChange, className, type = "text", placeholder, w
   );
 };
 
-const MaskedTextarea = ({ value, onChange, className, placeholder, isPrivacyMode, wrapperClassName = 'relative w-full h-24', autoResize = false, ...props }) => {
+const MaskedTextarea = ({ value, onChange, className, placeholder, isPrivacyMode, wrapperClassName = 'relative w-full h-24', autoResize = false, style, ...props }) => {
   const interactiveRef = useRef(null);
   const underlayRef = useRef(null);
 
@@ -64,7 +64,7 @@ const MaskedTextarea = ({ value, onChange, className, placeholder, isPrivacyMode
         onChange={onChange}
         className={className}
         placeholder={placeholder}
-        style={autoResize ? { overflow: 'hidden' } : undefined}
+        style={{ ...(autoResize ? { overflow: 'hidden' } : {}), ...style }}
         {...props}
       />
     );
@@ -87,7 +87,7 @@ const MaskedTextarea = ({ value, onChange, className, placeholder, isPrivacyMode
         value={value}
         onChange={onChange}
         className={`${className} relative z-10 bg-transparent focus:bg-transparent`}
-        style={{ color: 'transparent', caretColor: 'black', backgroundColor: 'transparent', ...(autoResize ? { overflow: 'hidden' } : {}) }}
+        style={{ color: 'transparent', caretColor: 'black', backgroundColor: 'transparent', ...(autoResize ? { overflow: 'hidden' } : {}), ...style }}
         placeholder={placeholder}
         {...props}
       />
@@ -267,6 +267,7 @@ const Sidebar = ({ isOpen, onClose, selectedNode, onUpdateNode, onDeleteNode, is
                     onChange={(e) => setLocalDescription(e.target.value)}
                     className="w-full p-2 border-2 border-gray-300 focus:border-black outline-none text-sm h-24 resize-none"
                     placeholder="Add descriptions..."
+                    style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                   />
                 </div>
 
@@ -297,17 +298,17 @@ const Sidebar = ({ isOpen, onClose, selectedNode, onUpdateNode, onDeleteNode, is
                           {/* Main row */}
                           <div className="flex items-center gap-2 p-1">
                             <GripVertical size={14} className="cursor-grab text-gray-400 shrink-0" />
-                            <input
-                              type="checkbox"
-                              checked={quest.completed}
-                              onChange={() => {
+                            <button
+                              onClick={() => {
                                 const updated = localQuests.map(q =>
                                   q.id === quest.id ? { ...q, completed: !q.completed } : q
                                 );
                                 setLocalQuests(updated);
                               }}
-                              className="h-4 w-4 border-2 border-black rounded-none cursor-pointer shrink-0"
-                            />
+                              className={`shrink-0 flex items-center justify-center cursor-pointer ${quest.completed ? 'text-gray-500' : ''}`}
+                            >
+                              {quest.completed ? <CheckSquare size={16} /> : <Square size={16} />}
+                            </button>
                             <MaskedInput
                               isPrivacyMode={isPrivacyMode}
                               value={quest.text}
@@ -373,10 +374,10 @@ const Sidebar = ({ isOpen, onClose, selectedNode, onUpdateNode, onDeleteNode, is
                                   className="flex-1 border border-gray-300 focus:border-black outline-none text-xs p-1"
                                 />
                                 <datalist id={`recurrence-${quest.id}`}>
-                                  <option value="constant" />
-                                  <option value="daily" />
-                                  <option value="weekly" />
-                                  <option value="monthly" />
+                                  <option value="Constant" />
+                                  <option value="Daily" />
+                                  <option value="Weekly" />
+                                  <option value="Monthly" />
                                 </datalist>
                               </div>
 
@@ -390,11 +391,11 @@ const Sidebar = ({ isOpen, onClose, selectedNode, onUpdateNode, onDeleteNode, is
                                   className="flex-1 border border-gray-300 focus:border-black outline-none text-xs p-1"
                                 />
                                 <datalist id={`relevance-${quest.id}`}>
-                                  <option value="compulsory" />
-                                  <option value="high" />
-                                  <option value="medium" />
-                                  <option value="low" />
-                                  <option value="none" />
+                                  <option value="Compulsory" />
+                                  <option value="High" />
+                                  <option value="Medium" />
+                                  <option value="Low" />
+                                  <option value="None" />
                                 </datalist>
                               </div>
 

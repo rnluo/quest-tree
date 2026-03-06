@@ -62,10 +62,14 @@ function QuestFlow() {
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedNodeId, setSelectedNodeId] = useState(null);
-  const [focusMode, setFocusMode] = useState(true);
+  const [focusMode, setFocusMode] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('qt-focus-mode') ?? 'true'); } catch { return true; }
+  });
   const [isInteractive, setIsInteractive] = useState(true);
-  const [isPrivacyMode, setIsPrivacyMode] = useState(false); // New state for privacy mode
-  const [showEnergyColumn, setShowEnergyColumn] = useState(false);
+  const [isPrivacyMode, setIsPrivacyMode] = useState(false);
+  const [showEnergyColumn, setShowEnergyColumn] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('qt-energy-column') ?? 'false'); } catch { return false; }
+  });
   const [chatOpen, setChatOpen] = useState(false);
 
   // Derive selected node from source of truth
@@ -95,6 +99,10 @@ function QuestFlow() {
       localStorage.setItem(FLOW_KEY, JSON.stringify({ nodes, edges }));
     }
   }, [nodes, edges]);
+
+  // Persist focusMode and showEnergyColumn
+  useEffect(() => { localStorage.setItem('qt-focus-mode', JSON.stringify(focusMode)); }, [focusMode]);
+  useEffect(() => { localStorage.setItem('qt-energy-column', JSON.stringify(showEnergyColumn)); }, [showEnergyColumn]);
 
   // Keyboard Shortcuts for Undo/Redo, Sidebar, Chat, Privacy Mode
   useEffect(() => {

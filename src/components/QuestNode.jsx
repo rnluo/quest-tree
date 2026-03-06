@@ -322,7 +322,7 @@ const EnergyGroup = ({ rows, topOffset = 0, hasAnyCounter, isDimmed, isInteracti
             </div>
             {/* Main box */}
             <div
-                className={`flex flex-col bg-white border-2 shadow-lg rounded-sm box-border pointer-events-auto
+                className={`border-2 shadow-lg rounded-sm box-border pointer-events-auto overflow-hidden bg-white
                     ${isDimmed ? 'border-gray-400' : 'border-black'}
                 `}
                 style={{ width: '42px', height: '100%', position: 'relative' }}
@@ -330,7 +330,7 @@ const EnergyGroup = ({ rows, topOffset = 0, hasAnyCounter, isDimmed, isInteracti
                 {rows.map((row, i) => (
                     <div
                         key={i}
-                        className={`absolute w-full box-border${i < rows.length - 1 ? ' border-b border-gray-200' : ''}`}
+                        className="absolute w-full"
                         style={{ top: `${i * 40}px`, height: '40px' }}
                     >
                         <EnergyCell
@@ -340,6 +340,14 @@ const EnergyGroup = ({ rows, topOffset = 0, hasAnyCounter, isDimmed, isInteracti
                             isInteractive={isInteractive}
                         />
                     </div>
+                ))}
+                {/* Dividers as exact pixel lines on the container */}
+                {rows.map((_, i) => i > 0 && (
+                    <div
+                        key={`div-${i}`}
+                        className="absolute left-0 right-0 h-px bg-gray-200 pointer-events-none"
+                        style={{ top: `${i * 40 - 1}px` }}
+                    />
                 ))}
             </div>
         </div>

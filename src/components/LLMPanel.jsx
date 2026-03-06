@@ -1,6 +1,6 @@
 /* eslint-disable react/prop-types */
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Settings, ArrowLeft, Send, Plus, Trash2, Pencil } from 'lucide-react';
+import { X, Settings, ArrowLeft, Send, Plus, Trash2, Pencil, CheckSquare, Square } from 'lucide-react';
 import {
   buildGraphContext,
   callLLM,
@@ -148,7 +148,7 @@ const LLMPanel = ({ isOpen, onClose, nodes, edges }) => {
       <div className="flex gap-2 items-end">
         <textarea
           ref={inputRef}
-          className="flex-1 border-2 border-black rounded-sm px-3 py-2 text-sm font-mono resize-none outline-none bg-white focus:bg-white"
+          className="flex-1 border-2 border-gray-300 focus:border-black rounded-sm px-3 py-2 text-sm font-mono resize-none outline-none bg-white"
           rows={3}
           value={input}
           onChange={e => setInput(e.target.value)}
@@ -177,10 +177,10 @@ const LLMPanel = ({ isOpen, onClose, nodes, edges }) => {
     <div className="px-6 py-4 border-b-2 border-black flex items-center gap-2 bg-gray-50 flex-shrink-0">
       {view === 'config' ? (
         <>
+          <h2 className="font-bold text-lg uppercase flex-1">Settings</h2>
           <button onClick={goBack} className="hover:bg-gray-200 p-1 rounded" title="Back">
             <ArrowLeft size={18} />
           </button>
-          <h2 className="font-bold text-lg uppercase flex-1">Settings</h2>
         </>
       ) : view === 'active' ? (
         <>
@@ -227,10 +227,10 @@ const LLMPanel = ({ isOpen, onClose, nodes, edges }) => {
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-bold uppercase tracking-wider">API Key</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-gray-500">API Key</label>
               <input
                 type="password"
-                className="border-2 border-black rounded-sm px-3 py-2 text-sm font-mono outline-none focus:bg-gray-50"
+                className="border-2 border-gray-300 focus:border-black rounded-sm px-3 py-2 text-sm font-mono outline-none bg-white"
                 value={apiConfig.apiKey || ''}
                 onChange={e => updateApiConfig('apiKey', e.target.value)}
                 placeholder="sk-..."
@@ -238,49 +238,49 @@ const LLMPanel = ({ isOpen, onClose, nodes, edges }) => {
               />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-bold uppercase tracking-wider">Base URL</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-gray-500">Base URL</label>
               <input
                 type="text"
-                className="border-2 border-black rounded-sm px-3 py-2 text-sm font-mono outline-none focus:bg-gray-50"
+                className="border-2 border-gray-300 focus:border-black rounded-sm px-3 py-2 text-sm font-mono outline-none bg-white"
                 value={apiConfig.baseUrl || ''}
                 onChange={e => updateApiConfig('baseUrl', e.target.value)}
                 placeholder="https://api.openai.com/v1"
               />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-bold uppercase tracking-wider">Model</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-gray-500">Model</label>
               <input
                 type="text"
-                className="border-2 border-black rounded-sm px-3 py-2 text-sm font-mono outline-none focus:bg-gray-50"
+                className="border-2 border-gray-300 focus:border-black rounded-sm px-3 py-2 text-sm font-mono outline-none bg-white"
                 value={apiConfig.model || ''}
                 onChange={e => updateApiConfig('model', e.target.value)}
                 placeholder="gpt-4o-mini"
               />
             </div>
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-bold uppercase tracking-wider">Context Filters</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-gray-500">Context Filters</label>
               <label className="flex items-center gap-3 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  className="w-4 h-4 cursor-pointer accent-black flex-shrink-0"
-                  checked={apiConfig.focusOnly || false}
-                  onChange={e => updateApiConfig('focusOnly', e.target.checked)}
-                />
+                <button
+                  className={`shrink-0 flex items-center justify-center cursor-pointer`}
+                  onClick={() => updateApiConfig('focusOnly', !(apiConfig.focusOnly || false))}
+                >
+                  {apiConfig.focusOnly ? <CheckSquare size={16} /> : <Square size={16} />}
+                </button>
                 <span className="text-sm">Active goals only</span>
               </label>
               <label className="flex items-center gap-3 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  className="w-4 h-4 cursor-pointer accent-black flex-shrink-0"
-                  checked={apiConfig.ratedOnly || false}
-                  onChange={e => updateApiConfig('ratedOnly', e.target.checked)}
-                />
-                <span className="text-sm">Rated tasks only</span>
+                <button
+                  className={`shrink-0 flex items-center justify-center cursor-pointer`}
+                  onClick={() => updateApiConfig('ratedOnly', !(apiConfig.ratedOnly || false))}
+                >
+                  {apiConfig.ratedOnly ? <CheckSquare size={16} /> : <Square size={16} />}
+                </button>
+                <span className="text-sm">Ignore irrelevant tasks</span>
               </label>
             </div>
             <div className="flex flex-col gap-1">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-bold uppercase tracking-wider">System Prompt</label>
+                <label className="text-xs font-bold uppercase tracking-wider text-gray-500">System Prompt</label>
                 <button
                   className="text-xs underline hover:no-underline"
                   onClick={() => updateApiConfig('systemPrompt', DEFAULT_SYSTEM_PROMPT)}
@@ -289,7 +289,7 @@ const LLMPanel = ({ isOpen, onClose, nodes, edges }) => {
                 </button>
               </div>
               <textarea
-                className="border-2 border-black rounded-sm px-3 py-2 text-sm font-mono outline-none focus:bg-gray-50 resize-none"
+                className="border-2 border-gray-300 focus:border-black rounded-sm px-3 py-2 text-sm font-mono outline-none bg-white resize-none"
                 rows={12}
                 value={apiConfig.systemPrompt !== undefined ? apiConfig.systemPrompt : DEFAULT_SYSTEM_PROMPT}
                 onChange={e => updateApiConfig('systemPrompt', e.target.value)}

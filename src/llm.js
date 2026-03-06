@@ -11,21 +11,49 @@ export const DEFAULT_SYSTEM_PROMPT =
 
 export function buildGraphContext(nodes, edges, { focusOnly = false, ratedOnly = false } = {}) {
   const activeNodes = focusOnly ? nodes.filter(n => !n.data?.isDimmed) : nodes;
-  const idToTitle = {};
-  activeNodes.forEach(n => { idToTitle[n.id] = n.data?.title || '(untitled)'; });
 
+  const childrenMap = {};
   const parentMap = {};
   edges.forEach(e => {
     if (!parentMap[e.target]) parentMap[e.target] = [];
     parentMap[e.target].push(e.source);
+    if (!childrenMap[e.source]) childrenMap[e.source] = [];
+    childrenMap[e.source].push(e.target);
   });
 
-  const goals = activeNodes.map(node => {
+  // For ratedOnly: exclude goal nodes whose tasks are ALL 'none', plus their descendant subtrees
+  const excludedNodes = new Set();
+  if (ratedOnly) {
+    const allNoneIds = new Set();
+    activeNodes.forEach(node => {
+      const quests = node.data?.quests || [];
+      if (quests.length > 0 && quests.every(q => q.relevance === 'none')) {
+        allNoneIds.add(node.id);
+      }
+    });
+    const queue = [...allNoneIds];
+    allNoneIds.forEach(id => excludedNodes.add(id));
+    while (queue.length > 0) {
+      const nodeId = queue.shift();
+      (childrenMap[nodeId] || []).forEach(childId => {
+        if (!excludedNodes.has(childId)) {
+          excludedNodes.add(childId);
+          queue.push(childId);
+        }
+      });
+    }
+  }
+
+  const includedNodes = ratedOnly ? activeNodes.filter(n => !excludedNodes.has(n.id)) : activeNodes;
+  const idToTitle = {};
+  activeNodes.forEach(n => { idToTitle[n.id] = n.data?.title || '(untitled)'; });
+
+  const goals = includedNodes.map(node => {
     const d = node.data || {};
     const parents = (parentMap[node.id] || []).map(pid => idToTitle[pid]).filter(Boolean);
 
     let rawTasks = d.quests || [];
-    if (ratedOnly) rawTasks = rawTasks.filter(q => q.relevance && q.relevance !== 'none');
+    if (ratedOnly) rawTasks = rawTasks.filter(q => q.relevance !== 'none');
     const tasks = rawTasks.map(q => {
       const t = { text: q.text || '' };
       if (q.completed) t.completed = true;
