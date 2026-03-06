@@ -251,6 +251,7 @@ const QuestNode = ({ id, data, isConnectable }) => {
                         onCounterChange={onQuestCounterChange}
                         onDeleteQuest={onDeleteQuest}
                         onAddQuest={onAddQuest}
+                        showEnergyColumn={showEnergyColumn}
                     />
                 );
             })
@@ -537,7 +538,7 @@ const CounterRow = ({ counter, onUpdate, isRowCompleted, isNodeDimmed, isInterac
                     className="absolute top-0 h-full flex items-center justify-start p-0"
                     style={{ 
                         right: '100%', 
-                        width: '31px', // 20px button + 10px gap
+                        width: '31px', // 20px button + 11px gap
                         zIndex: 20,
                         pointerEvents: 'auto'
                     }}
@@ -558,8 +559,11 @@ const CounterRow = ({ counter, onUpdate, isRowCompleted, isNodeDimmed, isInterac
                     >
                         <X size={14} strokeWidth={3} />
                     </button>
-                    
-
+                    {/* Connector line */}
+                    <div
+                        className={`absolute pointer-events-none h-[2px] ${isNodeDimmed ? 'bg-gray-400' : 'bg-black'}`}
+                        style={{ right: 0, width: '11px', top: '50%', transform: 'translateY(-50%)' }}
+                    />
                 </div>
              )}
 
@@ -634,7 +638,7 @@ const CounterRow = ({ counter, onUpdate, isRowCompleted, isNodeDimmed, isInterac
 };
 
 // Component for Removing Row/Node (Right side)
-const RemoveNodeButton = ({ isParentHovered, onRemove, isNodeDimmed }) => {
+const RemoveNodeButton = ({ isParentHovered, onRemove, isNodeDimmed, hideConnector = false }) => {
     if (!isParentHovered) return null;
     return (
         <div 
@@ -646,6 +650,13 @@ const RemoveNodeButton = ({ isParentHovered, onRemove, isNodeDimmed }) => {
                 pointerEvents: 'auto'
             }}
         >
+            {/* Connector line */}
+            {!hideConnector && (
+                <div
+                    className={`absolute pointer-events-none h-[2px] ${isNodeDimmed ? 'bg-gray-400' : 'bg-black'}`}
+                    style={{ left: 0, width: '11px', top: '50%', transform: 'translateY(-50%)' }}
+                />
+            )}
             <button 
                 className={`rounded-full text-white p-0 flex items-center justify-center box-border transition-colors absolute right-0 top-1/2 -translate-y-1/2
                     ${isNodeDimmed ? 'bg-gray-400 hover:bg-gray-500' : 'bg-black hover:bg-gray-800'}
@@ -669,7 +680,7 @@ const RemoveNodeButton = ({ isParentHovered, onRemove, isNodeDimmed }) => {
 // Helper for the "Add Task" button at the bottom
 const AddTaskButtonController = () => null; // Placeholder to avoid reference errors if used elsewhere, though we integrated it.
 
-const AddCounterButton = ({ isParentHovered, onAdd, isNodeDimmed }) => {
+const AddCounterButton = ({ isParentHovered, onAdd, isNodeDimmed, hideConnector = false }) => {
     if (!isParentHovered) return null;
     return (
         <div 
@@ -697,11 +708,18 @@ const AddCounterButton = ({ isParentHovered, onAdd, isNodeDimmed }) => {
             >
                 <Plus size={14} strokeWidth={3} />
             </button>
+            {/* Connector line */}
+            {!hideConnector && (
+                <div
+                    className={`absolute pointer-events-none h-[2px] ${isNodeDimmed ? 'bg-gray-400' : 'bg-black'}`}
+                    style={{ right: 0, width: '11px', top: '50%', transform: 'translateY(-50%)' }}
+                />
+            )}
         </div>
     );
 }
 
-const QuestItem = ({ quest, nodeId, onToggle, onTextChange, onCounterChange, isNodeDimmed, isInteractive, isPrivacyMode, isLast, onDeleteQuest, onAddQuest }) => {
+const QuestItem = ({ quest, nodeId, onToggle, onTextChange, onCounterChange, isNodeDimmed, isInteractive, isPrivacyMode, isLast, onDeleteQuest, onAddQuest, showEnergyColumn }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [text, setText] = useState(quest.text);
     const [isHovered, setIsHovered] = useState(false);
@@ -733,7 +751,8 @@ const QuestItem = ({ quest, nodeId, onToggle, onTextChange, onCounterChange, isN
                 <AddCounterButton 
                     isParentHovered={isHovered}
                     onAdd={() => onCounterChange && onCounterChange(nodeId, quest.id, { current: 0, max: 0 })}
-                    isNodeDimmed={isNodeDimmed} 
+                    isNodeDimmed={isNodeDimmed}
+                    hideConnector={showEnergyColumn}
                 />
             )}
             
