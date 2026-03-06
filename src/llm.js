@@ -7,7 +7,8 @@ export const DEFAULT_SYSTEM_PROMPT =
   `relevance (compulsory/high/medium/low/none), recurrence, deadline, and notes\n` +
   `- optional progress counter\n\n` +
   `When a current task graph is provided, use it as the full context for your answers. ` +
-  `Be concise and actionable.`;
+  `Be concise and actionable when presenting information and offering advice about goals and tasks.` +
+  'Important: Do not output Markdown or HTML. Do not output Emojis.';
 
 export function buildGraphContext(nodes, edges, { focusOnly = false, ratedOnly = false } = {}) {
   const activeNodes = focusOnly ? nodes.filter(n => !n.data?.isDimmed) : nodes;

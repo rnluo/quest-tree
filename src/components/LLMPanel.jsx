@@ -44,6 +44,14 @@ const LLMPanel = ({ isOpen, onClose, nodes, edges }) => {
     }
   }, [isOpen, view]);
 
+  // Auto-resize textarea
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.style.height = 'auto';
+      inputRef.current.style.height = Math.max(88, inputRef.current.scrollHeight) + 'px';
+    }
+  }, [input, view]);
+
   const goToConfig = () => { setPrevView(view); setView('config'); };
   const goBack = () => setView(prevView);
   const goHome = () => { setView('home'); setActiveConvId(null); };
@@ -111,7 +119,13 @@ const LLMPanel = ({ isOpen, onClose, nodes, edges }) => {
         model: apiConfig.model || 'gpt-4o-mini',
         baseUrl: apiConfig.baseUrl,
         systemPrompt: sysPrompt,
-        messages: [...priorMessages, userMsg],
+        messages: [
+          ...priorMessages,
+          ...(priorMessages.length > 0
+            ? [{ role: 'system', content: `Current task graph (refreshed):\n${graphContext}` }]
+            : []),
+          userMsg,
+        ],
       });
       setConversations(prev => prev.map(c =>
         c.id === convId ? { ...c, messages: [...c.messages, { role: 'assistant', content: reply }] } : c
@@ -137,37 +151,40 @@ const LLMPanel = ({ isOpen, onClose, nodes, edges }) => {
   // ── Shared input bar ─────────────────────────────────────────
   const inputBar = (
     <div className="border-t-2 border-black px-6 py-4 flex flex-col gap-2 bg-gray-50 flex-shrink-0">
-      {view === 'active' && (
-        <button
-          className="self-start text-xs font-bold uppercase tracking-wider flex items-center gap-1 hover:bg-gray-200 px-2 py-1 rounded-sm"
-          onClick={goHome}
-        >
-          <Plus size={12} /> New Chat
-        </button>
-      )}
-      <div className="flex gap-2 items-end">
+      <div className="flex gap-4 items-end">
         <textarea
           ref={inputRef}
-          className="flex-1 border-2 border-gray-300 focus:border-black rounded-sm px-3 py-2 text-sm font-mono resize-none outline-none bg-white"
-          rows={3}
+          className="w-[85%] shrink-0 border-2 border-gray-300 focus:border-black rounded-sm px-3 py-2 text-sm font-mono resize-none outline-none bg-white"
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={handleInputKeyDown}
           placeholder={view === 'active' ? 'Reply… (Ctrl+Enter)' : 'Ask about your tasks… (Ctrl+Enter)'}
           disabled={isLoading}
+          style={{ overflow: 'hidden', maxHeight: '300px' }}
         />
-        <button
-          className={`border-2 rounded-sm p-2 self-end transition-colors flex-shrink-0 ${
-            isLoading || !input.trim()
-              ? 'border-gray-300 text-gray-300 cursor-not-allowed bg-white'
-              : 'border-black bg-black text-white hover:bg-gray-800'
-          }`}
-          onClick={sendMessage}
-          disabled={isLoading || !input.trim()}
-          title="Send (Ctrl+Enter)"
-        >
-          <Send size={16} />
-        </button>
+        <div className="flex flex-col gap-4 flex-shrink-0">
+          {view === 'active' && (
+            <button
+              className="border-2 border-black rounded-sm p-2 bg-white hover:bg-gray-100 transition-colors"
+              onClick={goHome}
+              title="New Chat"
+            >
+              <Plus size={16} strokeWidth={2.5} />
+            </button>
+          )}
+          <button
+            className={`border-2 rounded-sm p-2 transition-colors flex-shrink-0 ${
+              isLoading || !input.trim()
+                ? 'border-gray-300 text-gray-300 cursor-not-allowed bg-white'
+                : 'border-black bg-black text-white hover:bg-gray-800'
+            }`}
+            onClick={sendMessage}
+            disabled={isLoading || !input.trim()}
+            title="Send (Ctrl+Enter)"
+          >
+            <Send size={16} />
+          </button>
+        </div>
       </div>
     </div>
   );
