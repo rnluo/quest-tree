@@ -26,6 +26,7 @@ import Lock from './icons/Lock';
 import LockOpen from './icons/LockOpen';
 import QuestNode from './components/QuestNode';
 import Sidebar from './components/Sidebar';
+import LLMPanel from './components/LLMPanel';
 import useStore from './store'; // Import our new store
 
 const nodeTypes = {
@@ -65,6 +66,7 @@ function QuestFlow() {
   const [isInteractive, setIsInteractive] = useState(true);
   const [isPrivacyMode, setIsPrivacyMode] = useState(false); // New state for privacy mode
   const [showEnergyColumn, setShowEnergyColumn] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
 
   // Derive selected node from source of truth
   const selectedNode = useMemo(() => 
@@ -94,21 +96,30 @@ function QuestFlow() {
     }
   }, [nodes, edges]);
 
-  // Keyboard Shortcuts for Undo/Redo & Privacy Mode
+  // Keyboard Shortcuts for Undo/Redo, Sidebar, Chat, Privacy Mode
   useEffect(() => {
       const handleKeyDown = (e) => {
           if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
-              if (e.shiftKey) {
-                  redo();
-              } else {
-                  undo();
-              }
+              if (e.shiftKey) redo(); else undo();
           }
-          
-          if (e.ctrlKey && e.altKey && !e.repeat) {
-              if (e.key === 'Control' || e.key === 'Alt' || e.key === 'AltGraph') {
-                   setIsPrivacyMode(prev => !prev);
-              }
+
+          // Ctrl+Shift: toggle privacy mode
+          if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.repeat &&
+              (e.key === 'Shift' || e.key === 'Control' || e.key === 'Meta') &&
+              e.shiftKey && (e.ctrlKey || e.metaKey)) {
+              setIsPrivacyMode(prev => !prev);
+          }
+
+          // Ctrl+B: toggle sidebar
+          if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key === 'b') {
+              e.preventDefault();
+              setSidebarOpen(prev => !prev);
+          }
+
+          // Ctrl+Alt+B: toggle chat
+          if ((e.ctrlKey || e.metaKey) && e.altKey && e.key === 'b' && !e.repeat) {
+              e.preventDefault();
+              setChatOpen(prev => !prev);
           }
       };
       
@@ -546,7 +557,7 @@ function QuestFlow() {
         <Controls 
             className='!bg-white !border-black !border-2 !shadow-none [&>button]:!border-black [&>button]:!border-b-2 last:[&>button]:!border-b-0' 
             position="top-right" 
-            style={{ marginTop: '190px', marginRight: '20px' }} 
+            style={{ marginTop: '190px', marginRight: chatOpen ? '420px' : '20px', transition: 'margin-right 0.15s ease-out' }} 
             showZoom={false}
             showFitView={false}
             showInteractive={false}
@@ -578,14 +589,15 @@ function QuestFlow() {
             maskColor="rgba(240, 240, 240, 0.6)"
             className='!border-2 !border-black !bg-white'
             position="top-right"
-            style={{ marginTop: '20px', marginRight: '20px' }}
+            style={{ marginTop: '20px', marginRight: chatOpen ? '420px' : '20px', transition: 'margin-right 0.15s ease-out' }}
         />
       </ReactFlow>
 
       {/* Floating Action Button */}
       <button
         onClick={handleAddNode}
-        className="fixed bottom-8 right-8 bg-black text-white w-14 h-14 rounded-full shadow-2xl hover:bg-gray-800 transition-transform active:scale-95 z-40 flex items-center justify-center"
+        className="fixed bottom-8 bg-black text-white w-14 h-14 rounded-full shadow-2xl hover:bg-gray-800 active:scale-95 z-40 flex items-center justify-center"
+        style={{ right: chatOpen ? '420px' : '32px', transition: 'right 0.15s ease-out' }}
       >
         <Plus size={24} />
       </button>
@@ -598,6 +610,12 @@ function QuestFlow() {
         onUpdateNode={onSidebarUpdateNode}
         onDeleteNode={deleteNode}
         isPrivacyMode={isPrivacyMode}
+      />
+      <LLMPanel
+        isOpen={chatOpen}
+        onClose={() => setChatOpen(false)}
+        nodes={renderNodes}
+        edges={edges}
       />
     </div>
   );
