@@ -104,11 +104,15 @@ const QuestNode = ({ id, data, isConnectable }) => {
 
   const energyTopOffset = title ? 40 : 0;
   const energyRows = showEnergyColumn && quests && quests.length > 0
-    ? quests.map((q) => ({
-        id: q.id + '-e',
-        energy: q.energy ?? 0,
-        onUpdate: (val) => onQuestEnergyChange && onQuestEnergyChange(id, q.id, val)
-      }))
+    ? quests.map((q) => {
+        const isTaskFinished = q.completed || (q.counter && q.counter.current >= q.counter.max);
+        return {
+          id: q.id + '-e',
+          energy: q.energy ?? 0,
+          isFinished: isTaskFinished,
+          onUpdate: (val) => onQuestEnergyChange && onQuestEnergyChange(id, q.id, val)
+        };
+      })
     : [];
 
   return (
@@ -337,7 +341,7 @@ const EnergyGroup = ({ rows, topOffset = 0, hasAnyCounter, isDimmed, isInteracti
                         <EnergyCell
                             value={row.energy}
                             onUpdate={row.onUpdate}
-                            isDimmed={isDimmed}
+                            isDimmed={isDimmed || row.isFinished}
                             isInteractive={isInteractive}
                         />
                     </div>
@@ -572,7 +576,7 @@ const CounterRow = ({ counter, onUpdate, isRowCompleted, isNodeDimmed, isInterac
                     <button
                         className={`w-full flex justify-center flex-1 items-center h-1/2
                              ${isInteractive ? 'hover:bg-gray-100 active:bg-gray-200 cursor-pointer' : 'cursor-default'}
-                             text-gray-600`}
+                             ${isNodeDimmed ? 'text-gray-400' : 'text-gray-600'}`}
                         onClick={(e) => {
                             e.stopPropagation();
                             updateCounter({ current: currentVal + 1 });
@@ -590,7 +594,7 @@ const CounterRow = ({ counter, onUpdate, isRowCompleted, isNodeDimmed, isInterac
                     <button
                         className={`w-full flex justify-center flex-1 items-center h-1/2
                              ${isInteractive ? 'hover:bg-gray-100 active:bg-gray-200 cursor-pointer' : 'cursor-default'}
-                        text-gray-600`}
+                        ${isNodeDimmed ? 'text-gray-400' : 'text-gray-600'}`}
                         onClick={(e) => {
                             e.stopPropagation();
                             updateCounter({ current: Math.max(0, currentVal - 1) });
@@ -606,7 +610,7 @@ const CounterRow = ({ counter, onUpdate, isRowCompleted, isNodeDimmed, isInterac
                     <button
                         className={`w-full flex justify-center flex-1 items-center h-1/2
                              ${isInteractive ? 'hover:bg-gray-100 active:bg-gray-200 cursor-pointer' : 'cursor-default'}
-                        text-gray-600`}
+                        ${isNodeDimmed ? 'text-gray-400' : 'text-gray-600'}`}
                         onClick={(e) => {
                             e.stopPropagation();
                             updateCounter({ max: maxVal + 1 });
@@ -623,7 +627,7 @@ const CounterRow = ({ counter, onUpdate, isRowCompleted, isNodeDimmed, isInterac
                     <button
                         className={`w-full flex justify-center flex-1 items-center h-1/2
                              ${isInteractive ? 'hover:bg-gray-100 active:bg-gray-200 cursor-pointer' : 'cursor-default'}
-                        text-gray-600`}
+                        ${isNodeDimmed ? 'text-gray-400' : 'text-gray-600'}`}
                         onClick={(e) => {
                             e.stopPropagation();
                             updateCounter({ max: Math.max(0, maxVal - 1) });
